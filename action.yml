@@ -1,0 +1,40 @@
+name: Snapshot Tag Action
+description: Derive weekly snapshot tags like vYYYY.MM.DD, check remote tag existence, and optionally create the tag via GitHub API.
+author: y-writings
+
+inputs:
+  snapshot_date:
+    description: Optional override in YYYY.MM.DD format.
+    required: false
+  github_token:
+    description: GitHub token used for remote tag lookup and optional creation.
+    required: false
+    default: ${{ github.token }}
+  create_if_missing:
+    description: Whether to create the remote lightweight tag when it does not already exist.
+    required: false
+    default: 'false'
+  target_ref:
+    description: Branch ref to resolve when create_if_missing is true, for example main or refs/heads/main. Mutually exclusive with target_sha.
+    required: false
+  target_sha:
+    description: Explicit commit SHA to tag when create_if_missing is true. Mutually exclusive with target_ref. Either target_ref or target_sha is required when create_if_missing is true.
+    required: false
+
+outputs:
+  tag:
+    description: Resolved snapshot tag.
+  tag_exists:
+    description: Whether the resolved tag already existed in the remote repository before this action ran.
+  created:
+    description: Whether this action created the remote tag during this run.
+  target_sha:
+    description: Commit SHA referenced by the existing or newly created tag when available.
+
+runs:
+  using: node24
+  main: dist/index.js
+
+branding:
+  icon: tag
+  color: blue

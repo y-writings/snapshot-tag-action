@@ -22,29 +22,24 @@ jobs:
     name: Create weekly snapshot tag on main
     runs-on: ubuntu-latest
     steps:
-      - name: Check out main with full history and tags
+      - name: Check out repository for local action files
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: main
-          fetch-depth: 0
 
-      - name: Derive weekly snapshot tag
+      - name: Create weekly snapshot tag through GitHub API
         id: snapshot-tag
-        env:
-          SNAPSHOT_DATE: ${{ inputs.snapshot_date }}
-        run: bash scripts/derive-release-tag.sh
+        uses: ./
+        with:
+          snapshot_date: ${{ inputs.snapshot_date }}
+          create_if_missing: 'true'
+          target_ref: main
+          github_token: ${{ github.token }}
 
-      - name: Create immutable snapshot tag
-        if: steps.snapshot-tag.outputs.tag_exists == 'false'
+      - name: Report snapshot tag result
         env:
           TAG: ${{ steps.snapshot-tag.outputs.tag }}
-        run: |
-          target_sha="$(git rev-parse HEAD)"
-          git tag "${TAG}" "${target_sha}"
-          git push origin "refs/tags/${TAG}"
-
-      - name: Report existing snapshot tag
-        if: steps.snapshot-tag.outputs.tag_exists == 'true'
-        env:
-          TAG: ${{ steps.snapshot-tag.outputs.tag }}
-        run: echo "Snapshot tag ${TAG} already exists. Skipping tag creation."
+          TAG_EXISTS: ${{ steps.snapshot-tag.outputs.tag_exists }}
+          CREATED: ${{ steps.snapshot-tag.outputs.created }}
+          TARGET_SHA: ${{ steps.snapshot-tag.outputs.target_sha }}
+        run: echo "Snapshot tag ${TAG} already_existed=${TAG_EXISTS} created=${CREATED} target_sha=${TARGET_SHA}"
